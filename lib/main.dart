@@ -1,7 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebasechallenge01/firebase_options.dart';
+import 'package:firebasechallenge01/postScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:firebasechallenge01/constants.dart';
 
-void main() {
-  runApp(const MyApp());
+//
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget{
@@ -37,6 +47,10 @@ class _MyHomePageState extends State<MyHomePage>{
   //パスワードの表示・非表示
   bool _isObscure = true;
 
+
+  String _email = '';
+  String _password = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -63,6 +77,11 @@ class _MyHomePageState extends State<MyHomePage>{
                           borderRadius: BorderRadius.circular(10),
                         )
                       ),
+                      onChanged: (String value){
+                        setState(() {
+                          _email = value;
+                        });
+                      },
                     ),
                   ),
                 ],
@@ -97,36 +116,58 @@ class _MyHomePageState extends State<MyHomePage>{
                             borderRadius: BorderRadius.circular(10),
                           )
                       ),
+                      onChanged: (String value){
+                        setState(() {
+                          _password = value;
+                        });
+                      },
                     ),
                   ),
                 ],
               ),
             ),
+
+            SizedBox(height: 30,),
+
+            //ユーザー登録ボタン
+            Container(
+              height: 50,
+              child: ElevatedButton(
+                  onPressed: () async{
+                    try{
+                      final User? user = (await FirebaseAuth.instance.createUserWithEmailAndPassword(email: _email, password: _password)).user;
+                      if (user != null)
+                        Navigator.of(context).push(MaterialPageRoute(builder: (context)=> const postScreen()));
+                    } catch (e){
+                      print (e);
+                    }
+                  },
+                  child: Text('ユーザー登録'),
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all(
+                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                  ),
+                ),
+              ),
+            ),
+
+            SizedBox(height: 30,),
+
+            //テキスト
+            RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '既にアカウントをお持ちですか？',
+                      style: textStyle,
+                    )
+                  ]
+                ),
+            )
+
           ],
         ),
-      ),
-      // body: Column(
-      //   mainAxisAlignment: MainAxisAlignment.center,
-      //   children: [
-      //     Row(
-      //       children: [
-      //         SizedBox(width: 95,),
-      //         Container(
-      //           width: 200,
-      //           child: TextFormField(
-      //             autofocus: false,
-      //             keyboardType: TextInputType.emailAddress,
-      //             decoration: InputDecoration(
-      //               border: OutlineInputBorder(
-      //                 borderRadius: BorderRadius.circular(10),
-      //               ),
-      //             ),
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   ],
-      // ),
+      )
     );
   }
 }
