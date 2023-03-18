@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebasechallenge01/constants.dart';
@@ -18,19 +19,42 @@ class _postScreenState extends State<postScreen> {
   //スクロール
   ScrollController scrollController = ScrollController();
 
-  //メッセージを送る
-  sendMessage(){
-    setState(() {
-      messageList.add({
-        'message': textEditingController.text,
-        'userId': 'n0ONN718IHXYKMqUftgdCfkB7Yo2',
-      });
-      textEditingController.clear();
-      isEditing = false;
+
+  final Stream<QuerySnapshot> _message = FirebaseFirestore.instance.collection('messagelists').orderBy('timestamp').snapshots();
+  String userId = FirebaseAuth.instance.currentUser!.uid;
+
+  // late String sendUser;
+  //
+  //
+  // getUserName() async {
+  //   DocumentSnapshot userDocument = await FirebaseFirestore.instance.collection('messagelists').doc(userId).get();
+  //   Map<String, dynamic> userData = userDocument.data()! as Map<String, dynamic>;
+  //   sendUser = userData['userId'];
+  // }
+
+
+    //メッセージを送る
+  sendMessage() async {
+    await FirebaseFirestore.instance.collection('messagelists').doc().set({
+      'message': textEditingController.text,
+      'userId': userId,
+      'timestamp': FieldValue.serverTimestamp(),
     });
-    scrollController.animateTo(scrollController.position.maxScrollExtent,
-        duration: const Duration(microseconds: 500), curve: Curves.easeIn);
+    textEditingController.clear();
+    isEditing = false;
   }
+  //   setState(() {
+  //     messageList.add({
+  //       'message': textEditingController.text,
+  //       // 'userId': '',
+  //       'timestamp': FieldValue.serverTimestamp(),
+  //     });
+  //     textEditingController.clear();
+  //     isEditing = false;
+  //   });
+  //   scrollController.animateTo(scrollController.position.maxScrollExtent,
+  //       duration: const Duration(microseconds: 500), curve: Curves.easeIn);
+  // }
 
 
   @override
@@ -39,16 +63,46 @@ class _postScreenState extends State<postScreen> {
       appBar: AppBar(),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.end,
-        children: [
+        children: <Widget>[
           Expanded(
-              child: ListView.builder(
-                  itemBuilder: (context, index){
-                    return buildMessage(messageList[index]);
-                  },
-                itemCount: messageList.length,
-                controller: scrollController,
-              ),
+            child:
+            StreamBuilder<QuerySnapshot>(
+              stream: _message,
+              builder: (context, snapshot){
+                if(snapshot.hasData){
+                  List<DocumentSnapshot> messagesData = snapshot.data!.docs;
+                  return ListView.builder(
+                    itemCount: messagesData.length,
+                    itemBuilder: (context, index) {
+                      Map<String, dynamic> messageData = messagesData[index].data()! as Map<String, dynamic>;
+                      return Row(
+                        children: [
+                          Flexible(
+                            flex: 3,
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                // color: sendUser == userId ?
+                                // Colors.lime
+                                      color: Colors.grey.withOpacity(0.3),
+
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(messageData['message']),
+                            ),
+                          )
+                        ],
+                      );
+                    }
+                  );
+                }else{
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
           ),
+
           Row(
             children: [
               Expanded(
@@ -69,7 +123,13 @@ class _postScreenState extends State<postScreen> {
                             controller: textEditingController,
                           ),
                       ),
-                      IconButton(onPressed: sendMessage, icon: const Icon(Icons.send, color: Colors.black,)),
+                      IconButton(
+                          onPressed: () async {
+                            sendMessage();
+                            textEditingController.clear();
+                          },
+                          icon: const Icon(Icons.send, color: Colors.black,)
+                      ),
                     ],
                   ),
                 ),
@@ -80,24 +140,5 @@ class _postScreenState extends State<postScreen> {
       ),
     );
   }
-  
-  Widget buildMessage(Map<String, dynamic> messageInfo){
-    return Row(
-      children: [
-        Flexible(
-          flex: 3,
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: Text(messageInfo['message']),
-          ),
-        )
-      ],
-    );
-  }
-  
+
 }

@@ -8,7 +8,7 @@ const Color inputLightGrey = Color(0xfff0f0f0);
 
 List<Map<String, dynamic>> messageList = [
   {
-    'message': 'こんにちは',
-    'userId': 'n0ONN718IHXYKMqUftgdCfkB7Yo2',
+    'message': '',
+    'userId': '',
   },
 ];
