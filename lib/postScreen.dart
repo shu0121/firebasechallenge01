@@ -22,6 +22,7 @@ class _postScreenState extends State<postScreen> {
 
   final Stream<QuerySnapshot> _message = FirebaseFirestore.instance.collection('messagelists').orderBy('timestamp').snapshots();
   String userId = FirebaseAuth.instance.currentUser!.uid;
+  final Stream<QuerySnapshot> messageId = FirebaseFirestore.instance.collection('messagelists').where('userId').snapshots();
 
   // late String sendUser;
   //
@@ -83,10 +84,9 @@ class _postScreenState extends State<postScreen> {
                               margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                // color: sendUser == userId ?
-                                // Colors.lime
-                                      color: Colors.grey.withOpacity(0.3),
-
+                                color: messageData['userId'] == userId
+                                  ? Colors.lime
+                                  : Colors.grey.withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(5),
                               ),
                               child: Text(messageData['message']),
